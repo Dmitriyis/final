@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProductDto",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Unique product identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Product name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed product description"
+    },
+    "price": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Product price amount"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (e.g. RUB, USD)"
+        }
+      },
+      "required": ["amount", "currency"]
+    },
+    "category": {
+      "type": "string",
+      "description": "Product category"
+    },
+    "brand": {
+      "type": "string",
+      "description": "Product brand"
+    },
+    "stock": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "integer",
+          "description": "Available quantity in stock"
+        },
+        "reserved": {
+          "type": "integer",
+          "description": "Reserved quantity in stock"
+        }
+      },
+      "required": ["available", "reserved"]
+    },
+    "sku": {
+      "type": "string",
+      "description": "Stock keeping unit"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Product tags"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Image URL"
+          },
+          "alt": {
+            "type": "string",
+            "description": "Image alternative text"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    "specifications": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Product technical specifications"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Product creation timestamp"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Product last update timestamp"
+    },
+    "index": {
+      "type": "string",
+      "description": "Search index name"
+    },
+    "store_id": {
+      "type": "string",
+      "description": "Store identifier"
+    }
+  },
+  "required": [
+    "product_id",
+    "name",
+    "price",
+    "category",
+    "stock",
+    "created_at",
+    "store_id"
+  ]
+}
