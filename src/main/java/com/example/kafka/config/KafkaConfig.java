@@ -103,6 +103,7 @@ public class KafkaConfig {
         configProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
 
         configProps.put("schema.registry.url", "http://schema-registry:8081");
+        configProps.put("auto.register.schemas", false);
         configProps.put("use.latest.version", true);
 
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configProps));
@@ -135,6 +136,7 @@ public class KafkaConfig {
         configProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
 
         configProps.put("schema.registry.url", "http://schema-registry:8081");
+        configProps.put("auto.register.schemas", false);
         configProps.put("use.latest.version", true);
 
         ConcurrentKafkaListenerContainerFactory<String, ShopDtoKafka> listenerConsumerShop = new ConcurrentKafkaListenerContainerFactory<>();
@@ -165,6 +167,10 @@ public class KafkaConfig {
         configProps.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, truststoreLocation);
         configProps.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, truststorePassword);
         configProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
+
+        configProps.put("schema.registry.url", "http://schema-registry:8081");
+        configProps.put("auto.register.schemas", false);
+        configProps.put("use.latest.version", true);
 
         ConcurrentKafkaListenerContainerFactory<String, ClientDtoKafka> listenerConsumerClient = new ConcurrentKafkaListenerContainerFactory<>();
         listenerConsumerClient.setConsumerFactory(new DefaultKafkaConsumerFactory<>(configProps));
