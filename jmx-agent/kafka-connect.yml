@@ -1,0 +1,34 @@
+lowercaseOutputName: true
+rules:
+  - pattern: 'kafka.server<type=BrokerTopicMetrics, name=MessagesInPerSec><>OneMinuteRate'
+    name: kafka_server_messages_in_per_sec
+    help: "Messages in per second"
+    type: GAUGE
+  - pattern: 'kafka.server<type=BrokerTopicMetrics, name=BytesInPerSec><>OneMinuteRate'
+    name: kafka_server_bytes_in_per_sec
+    help: "Bytes in per second"
+    type: GAUGE
+  - pattern: 'kafka.network<type=SocketServer, name=NetworkProcessorAvgIdlePercent><>Value'
+    name: kafka_network_processor_idle_percent
+    help: "Network processor idle percentage"
+    type: GAUGE
+  - pattern: 'kafka.server<type=RequestHandlerPool, name=RequestHandlerAvgIdlePercent><>Value'
+    name: kafka_server_request_handler_avg_idle_percent
+    help: "Request handler idle percentage"
+    type: GAUGE
+  - pattern: 'kafka.server<type=ReplicaManager, name=UnderReplicatedPartitions><>Value'
+    name: kafka_server_under_replicated_partitions
+    help: "Number of under-replicated partitions"
+    type: GAUGE
+  - pattern: 'kafka.network<type=RequestMetrics, name=Produce-Total, request=Produce><>Count'
+    name: kafka_server_total_produce_requests
+    help: "Total produce requests"
+    type: COUNTER
+  - pattern: 'kafka.network<type=RequestMetrics, name=FetchFollower-Total, request=FetchFollower><>Count'
+    name: kafka_server_fetch_follower_total
+    help: "Total fetch follower requests"
+    type: COUNTER
+  - pattern: 'kafka.log<type=LogFlushStats, name=LogFlushRateAndTimeMs><>50thPercentile'
+    name: kafka_server_log_flush_time_ms
+    help: "Log flush time (50th percentile) in ms"
+    type: GAUGE

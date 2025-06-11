@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -18,10 +19,10 @@ import java.util.Map;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShopDtoKafka {
+public class ShopCandidateDtoKafka {
 
-    @JsonProperty(value = "product_id")
-    private String productId;
+    @JsonProperty(value = "shop_id")
+    private String shopId;
     @JsonProperty(value = "name")
     private String name;
     @JsonProperty(value = "description")
@@ -50,6 +51,16 @@ public class ShopDtoKafka {
     private String index;
     @JsonProperty(value = "store_id")
     private String storeId;
+
+    @JsonProperty("created_at")
+    public String getCreatedAt() {
+        return createdAt != null ? createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
+    }
+
+    @JsonProperty("updated_at")
+    public String getUpdatedAt() {
+        return updatedAt != null ? updatedAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
+    }
 
     @Getter
     @Setter

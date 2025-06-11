@@ -1,7 +1,7 @@
 package com.example.kafka.config;
 
 import com.example.kafka.dto.ClientDtoKafka;
-import com.example.kafka.dto.ShopDtoKafka;
+import com.example.kafka.dto.ShopCandidateDtoKafka;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.json.JsonSchema;
@@ -15,8 +15,12 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.state.Stores;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +28,9 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.KafkaStreamsConfiguration;
+import org.springframework.kafka.config.KafkaStreamsInfrastructureCustomizer;
+import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -32,12 +39,14 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.util.backoff.FixedBackOff;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 @Configuration
@@ -58,6 +67,30 @@ public class KafkaConfig {
 
 
     // Topic
+    @Bean
+    public NewTopic newTopicShopCandidate() {
+        return TopicBuilder.name("shop-candidate")
+                .replicas(3)
+                .partitions(3)
+                .config("cleanup.policy", "delete")
+                .config("min.insync.replicas", "2")
+                .config("retention.ms", "604800000")
+                .config("segment.bytes", "1073741824")
+                .build();
+    }
+
+    @Bean
+    public NewTopic newTopicShopBlocked() {
+        return TopicBuilder.name("shop-blocked")
+                .replicas(3)
+                .partitions(3)
+                .config("cleanup.policy", "delete")
+                .config("min.insync.replicas", "2")
+                .config("retention.ms", "604800000")
+                .config("segment.bytes", "1073741824")
+                .build();
+    }
+
     @Bean
     public NewTopic newTopicShop() {
         return TopicBuilder.name("shop")
@@ -85,7 +118,7 @@ public class KafkaConfig {
     // Producer
 
     @Bean
-    public KafkaTemplate<String, ShopDtoKafka> kafkaTemplateTopicShop(KafkaProperties kafkaProperties) {
+    public KafkaTemplate<String, ShopCandidateDtoKafka> kafkaTemplateTopicShop(KafkaProperties kafkaProperties) {
         HashMap<String, Object> configProps = new HashMap<>(kafkaProperties.buildProducerProperties());
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSchemaSerializer.class);
@@ -103,8 +136,28 @@ public class KafkaConfig {
         configProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
 
         configProps.put("schema.registry.url", "http://schema-registry:8081");
-        configProps.put("auto.register.schemas", false);
         configProps.put("use.latest.version", true);
+
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configProps));
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> kafkaTemplateBlockedShop(KafkaProperties kafkaProperties) {
+        HashMap<String, Object> configProps = new HashMap<>(kafkaProperties.buildProducerProperties());
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
+        configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+
+        configProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
+        configProps.put(SaslConfigs.SASL_MECHANISM, "PLAIN");
+        configProps.put(SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.plain.PlainLoginModule required " +
+                "username=\"" + "shop" + "\" " +
+                "password=\"" + saslPassword + "\";");
+
+        configProps.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, truststoreLocation);
+        configProps.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, truststorePassword);
+        configProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
 
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configProps));
     }
@@ -112,7 +165,7 @@ public class KafkaConfig {
     // Consumer
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, ShopDtoKafka> listenerConsumerShop(KafkaProperties kafkaProperties, DefaultErrorHandler errorHandler) {
+    public ConcurrentKafkaListenerContainerFactory<String, ShopCandidateDtoKafka> listenerConsumerShop(KafkaProperties kafkaProperties, DefaultErrorHandler errorHandler) {
         HashMap<String, Object> configProps = new HashMap<>(kafkaProperties.buildConsumerProperties());
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
@@ -123,7 +176,7 @@ public class KafkaConfig {
         configProps.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, "3000");
         configProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 200);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "shop-consumer-group");
-        configProps.put(KafkaJsonSchemaDeserializerConfig.JSON_VALUE_TYPE, ShopDtoKafka.class);
+        configProps.put(KafkaJsonSchemaDeserializerConfig.JSON_VALUE_TYPE, ShopCandidateDtoKafka.class);
 
         configProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
         configProps.put(SaslConfigs.SASL_MECHANISM, "PLAIN");
@@ -136,10 +189,9 @@ public class KafkaConfig {
         configProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
 
         configProps.put("schema.registry.url", "http://schema-registry:8081");
-        configProps.put("auto.register.schemas", false);
         configProps.put("use.latest.version", true);
 
-        ConcurrentKafkaListenerContainerFactory<String, ShopDtoKafka> listenerConsumerShop = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, ShopCandidateDtoKafka> listenerConsumerShop = new ConcurrentKafkaListenerContainerFactory<>();
         listenerConsumerShop.setConsumerFactory(new DefaultKafkaConsumerFactory<>(configProps));
         listenerConsumerShop.setCommonErrorHandler(errorHandler);
         return listenerConsumerShop;
@@ -169,13 +221,47 @@ public class KafkaConfig {
         configProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
 
         configProps.put("schema.registry.url", "http://schema-registry:8081");
-        configProps.put("auto.register.schemas", false);
         configProps.put("use.latest.version", true);
 
         ConcurrentKafkaListenerContainerFactory<String, ClientDtoKafka> listenerConsumerClient = new ConcurrentKafkaListenerContainerFactory<>();
         listenerConsumerClient.setConsumerFactory(new DefaultKafkaConsumerFactory<>(configProps));
 
         return listenerConsumerClient;
+    }
+
+    // Stream
+
+    @Bean
+    public StreamsBuilderFactoryBean streamsBuilderFactoryBean() {
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "app");
+        properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put("schema.registry.url", "http://schema-registry:8081");
+        properties.put("use.latest.version", true);
+
+        properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
+        properties.put(SaslConfigs.SASL_MECHANISM, "PLAIN");
+        properties.put(SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.plain.PlainLoginModule required " +
+                "username=\"" + "shop" + "\" " +
+                "password=\"" + saslPassword + "\";");
+
+        properties.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, truststoreLocation);
+        properties.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, truststorePassword);
+        properties.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
+
+        StreamsBuilderFactoryBean builderFactoryBean = new StreamsBuilderFactoryBean(new KafkaStreamsConfiguration(properties));
+
+        builderFactoryBean.setInfrastructureCustomizer(new KafkaStreamsInfrastructureCustomizer() {
+            @Override
+            public void configureBuilder(StreamsBuilder builder) {
+                builder.addStateStore(Stores.keyValueStoreBuilder(
+                        Stores.persistentKeyValueStore("blocked-shop-store"),
+                        Serdes.String(),
+                        new JsonSerde<>(LinkedHashSet.class)
+                ));
+            }
+        });
+        return builderFactoryBean;
     }
 
     // Handler

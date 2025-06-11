@@ -88,19 +88,68 @@ docker exec -i kafka-1-reg bash -c "\
   --operation READ \
   --group shop-consumer-group"
 
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation DESCRIBE \
+  --topic shop-candidate"
 
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation READ \
+  --topic shop-candidate"
 
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation WRITE \
+  --topic shop-candidate"
 
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation DESCRIBE \
+  --topic shop-blocked"
 
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation READ \
+  --topic shop-blocked"
 
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation WRITE \
+  --topic shop-blocked"
 
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation All \
+  --group app"
 
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation DESCRIBE \
+  --topic app-blocked-shop-store-changelog"
 
-
-
-
-
-
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:shop \
+  --operation All \
+  --topic app-blocked-shop-store-changelog"
 
 # user:schema-registry
 docker exec -i kafka-1-destination bash -c "\
@@ -192,6 +241,45 @@ docker exec -i kafka-1-destination bash -c "\
   --add --allow-principal User:shop \
   --operation READ \
   --group shop-consumer-group-mirror"
+
+
+
+
+
+
+
+
+
+
+# connect-user
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:connect-user \
+  --operation ALL \
+  --topic connect-offset-storage"
+
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:connect-user \
+  --operation ALL \
+  --topic connect-status-storage"
+
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:connect-user \
+  --operation ALL \
+  --topic connect-config-storage"
+
+docker exec -i kafka-1-reg bash -c "\
+  kafka-acls --bootstrap-server kafka-1:9092 \
+  --command-config /etc/kafka/jaas/client_sasl.properties \
+  --add --allow-principal User:connect-user \
+  --operation ALL \
+  --group kafka-connect"
+
 
 sleep 5 && docker restart app
 sleep 10 && docker restart mirror-maker

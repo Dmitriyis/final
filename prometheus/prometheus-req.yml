@@ -1,0 +1,29 @@
+global:
+  scrape_interval:     5s
+  evaluation_interval: 5s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alert-manager:9093']
+
+rule_files:
+  - 'alert-rules-req.yml'
+  - 'alert-rules-destination.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'kafka-req'
+    static_configs:
+      - targets: [ 'kafka-1-reg:7071', 'kafka-2-reg:7072', 'kafka-3-reg:7073' ]
+        labels:
+          cluster: 'kafka-reg'
+
+  - job_name: 'kafka-destination'
+    static_configs:
+      - targets: [ 'kafka-1-destination:7071', 'kafka-2-destination:7072', 'kafka-3-destination:7073' ]
+        labels:
+          cluster: 'kafka-destination'

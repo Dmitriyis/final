@@ -1,6 +1,6 @@
 package com.example.kafka.service.consumer;
 
-import com.example.kafka.dto.ShopDtoKafka;
+import com.example.kafka.dto.ShopCandidateDtoKafka;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,7 +12,7 @@ public class ShopConsumerService {
     private static final Logger log = LoggerFactory.getLogger(ShopConsumerService.class);
 
     @KafkaListener(topics = "shop", groupId = "shop-consumer-group", containerFactory = "listenerConsumerShop")
-    public void listenStringMessage(@Payload ShopDtoKafka shopDtoKafka) {
+    public void listenStringMessage(@Payload ShopCandidateDtoKafka shopDtoKafka) {
         log.info("Получено сообщение из топика shop. Message: " + shopDtoKafka);
     }
 }

@@ -1,26 +1,26 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ProductDto",
+  "title": "ShopDto",
   "type": "object",
   "properties": {
-    "product_id": {
+    "shop_id": {
       "type": "string",
       "description": "Unique product identifier"
     },
     "name": {
       "type": "string",
-      "description": "Product name"
+      "description": "Shop name"
     },
     "description": {
       "type": "string",
-      "description": "Detailed product description"
+      "description": "Detailed shop description"
     },
     "price": {
       "type": "object",
       "properties": {
         "amount": {
           "type": "number",
-          "description": "Product price amount"
+          "description": "Shop price amount"
         },
         "currency": {
           "type": "string",
@@ -31,11 +31,11 @@
     },
     "category": {
       "type": "string",
-      "description": "Product category"
+      "description": "Shop category"
     },
     "brand": {
       "type": "string",
-      "description": "Product brand"
+      "description": "Shop brand"
     },
     "stock": {
       "type": "object",
@@ -60,7 +60,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Product tags"
+      "description": "Shop tags"
     },
     "images": {
       "type": "array",
@@ -84,17 +84,17 @@
       "additionalProperties": {
         "type": "string"
       },
-      "description": "Product technical specifications"
+      "description": "Shop technical specifications"
     },
     "created_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Product creation timestamp"
+      "description": "Shop creation timestamp"
     },
     "updated_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Product last update timestamp"
+      "description": "Shop last update timestamp"
     },
     "index": {
       "type": "string",

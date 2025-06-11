@@ -1,0 +1,29 @@
+groups:
+- name: KafkaAlerts
+  rules:
+  - alert: KafkaBrokerDown
+    expr: up{job="kafka-req"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Kafka broker is down"
+      description: "Kafka broker {{ $labels.instance }} is down for more than 1 minute."
+
+  - alert: HighUnderReplicatedPartitions
+    expr: kafka_server_under_replicated_partitions > 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High number of under-replicated partitions"
+      description: "Broker {{ $labels.instance }} has {{ $value }} under-replicated partitions."
+
+  - alert: HighMessageRate
+    expr: rate(kafka_server_messages_in_per_sec[5m]) > 1000
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High message rate detected"
+      description: "Message rate on {{ $labels.instance }} exceeds 1000 msg/sec."
