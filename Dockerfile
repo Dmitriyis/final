@@ -6,4 +6,5 @@ COPY target/kafka-yandex-0.0.1.jar app.jar
 
 COPY kafka-schema-registry ./kafka-schema
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED", "-jar", "app.jar"]
+

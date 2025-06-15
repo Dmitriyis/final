@@ -1,5 +1,7 @@
 version: '3'
 services:
+  ### KAFKA-CLUSTER-REQ
+
   zookeeper-reg:
     image: confluentinc/cp-zookeeper:7.4.4
     restart: always
@@ -196,82 +198,7 @@ services:
     volumes:
       - ./src/main/resources/cert/client/client.truststore.jks:/etc/kafka/certs/truststore.jks:ro
 
-  app:
-    build:
-      context: ./
-    container_name: app
-    restart:
-      on-failure
-    ports:
-      - "8090:8090"
-    volumes:
-      - ./src/main/resources/cert/client/client.truststore.jks:/etc/kafka/secrets/client.truststore
-    depends_on:
-      - kafka-1-reg
-      - kafka-2-reg
-      - kafka-3-reg
-      - schema-registry
-
-  prometheus:
-    image: prom/prometheus:v2.30.3
-    container_name: prometheus
-    ports:
-      - 9090:9090
-    restart:
-      on-failure
-    volumes:
-      - ./prometheus:/etc/prometheus
-    command: --web.enable-lifecycle --config.file=/etc/prometheus/prometheus-req.yml
-    depends_on:
-      - kafka-1-reg
-      - kafka-2-reg
-      - kafka-3-reg
-      - schema-registry
-
-  alert-manager:
-    image: prom/alertmanager:v0.25.0
-    container_name: alertmanager
-    ports:
-      - "3093:9093"
-    restart:
-      on-failure
-    volumes:
-      - ./alert-manager:/etc/alertmanager
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
-    depends_on:
-      - prometheus
-
-  grafana:
-    build:
-      context: ./grafana
-    container_name: grafana
-    ports:
-      - 3000:3000
-    restart:
-      on-failure
-    depends_on:
-      - prometheus
-
-  mirror-maker:
-    image: confluentinc/cp-kafka
-    container_name: mirror-maker
-    restart:
-      on-failure
-    volumes:
-      - ./consumer.cfg:/etc/consumer.cfg
-      - ./producer.cfg:/etc/producer.cfg
-      - ./src/main/resources/cert/client/client.truststore.jks:/etc/kafka/secrets/truststore.jks
-      - ./src/main/resources/cert/client_sasl.properties:/etc/kafka/jaas/client_sasl.properties
-    command: bash -c "sleep 30 && kafka-mirror-maker --consumer.config /etc/consumer.cfg --producer.config /etc/producer.cfg --whitelist shop --num.streams 1"
-    depends_on:
-      - kafka-1-reg
-      - kafka-1-destination
-      - zookeeper-reg
-      - zookeeper-destination
-
-  # kafka cluster destination
+  ### KAFKA-CLUSTER-DESTINATION
 
   zookeeper-destination:
     image: confluentinc/cp-zookeeper:7.4.4
@@ -442,17 +369,214 @@ services:
     volumes:
       - ./src/main/resources/cert/client/client.truststore.jks:/etc/kafka/certs/truststore.jks:ro
 
+  app:
+    build:
+      context: ./
+    container_name: app
+    restart:
+      on-failure
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./src/main/resources/cert/client/client.truststore.jks:/etc/kafka/secrets/client.truststore
+    depends_on:
+      - kafka-1-reg
+      - kafka-2-reg
+      - kafka-3-reg
+      - schema-registry
+
+  prometheus:
+    image: prom/prometheus:v2.30.3
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    restart:
+      on-failure
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command: --web.enable-lifecycle --config.file=/etc/prometheus/prometheus-req.yml
+    depends_on:
+      - kafka-1-reg
+      - kafka-2-reg
+      - kafka-3-reg
+      - schema-registry
+
+  alert-manager:
+    image: prom/alertmanager:v0.25.0
+    container_name: alertmanager
+    ports:
+      - "3093:9093"
+    restart:
+      on-failure
+    volumes:
+      - ./alert-manager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    depends_on:
+      - prometheus
+
+  grafana:
+    build:
+      context: ./grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart:
+      on-failure
+    depends_on:
+      - prometheus
+
+  mirror-maker:
+    image: confluentinc/cp-kafka
+    container_name: mirror-maker
+    restart:
+      on-failure
+    volumes:
+      - ./consumer.cfg:/etc/consumer.cfg
+      - ./producer.cfg:/etc/producer.cfg
+      - ./src/main/resources/cert/client/client.truststore.jks:/etc/kafka/secrets/truststore.jks
+      - ./src/main/resources/cert/client_sasl.properties:/etc/kafka/jaas/client_sasl.properties
+    command: bash -c "sleep 30 && kafka-mirror-maker --consumer.config /etc/consumer.cfg --producer.config /etc/producer.cfg --whitelist 'shop|statistic-client' --num.streams 1"
+    depends_on:
+      - kafka-1-reg
+      - kafka-1-destination
+      - zookeeper-reg
+      - zookeeper-destination
+
+  elasticsearch:
+    image: elasticsearch:8.7.0
+    container_name: elasticsearch
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "1g"
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    depends_on:
+      - kafka-1-reg
+      - kafka-2-reg
+      - kafka-3-reg
+
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.4.4
+    container_name: kafka-connect
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "1g"
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./kafka-connect/confluentinc-kafka-connect-elasticsearch-15.0.0:/usr/share/java/kafka-connect-plugins/confluentinc-kafka-connect-elasticsearch-15.0.0
+      - ./src/main/resources/cert/client/client.truststore.jks:/etc/kafka/secrets/client.truststore.jks:ro
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka-1:9093,kafka-2:9095,kafka-3:9097"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      CONNECT_GROUP_ID: "kafka-connect-group"
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "true"
+      CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "true"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_PLUGIN_PATH: "/usr/share/java/kafka-connect-plugins/confluentinc-kafka-connect-elasticsearch-15.0.0"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_SECURITY_PROTOCOL: "SASL_SSL"
+      CONNECT_SASL_MECHANISM: "PLAIN"
+      CONNECT_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.plain.PlainLoginModule required username='connect-user' password='12345678';"
+      CONNECT_SSL_TRUSTSTORE_LOCATION: "/etc/kafka/secrets/client.truststore.jks"
+      CONNECT_SSL_TRUSTSTORE_PASSWORD: "12345678"
+      CONNECT_CONSUMER_SECURITY_PROTOCOL: "SASL_SSL"
+      CONNECT_CONSUMER_SASL_MECHANISM: "PLAIN"
+      CONNECT_CONSUMER_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.plain.PlainLoginModule required username='connect-user' password='12345678';"
+      CONNECT_CONSUMER_SSL_TRUSTSTORE_LOCATION: "/etc/kafka/secrets/client.truststore.jks"
+      CONNECT_CONSUMER_SSL_TRUSTSTORE_PASSWORD: "12345678"
+    depends_on:
+      - kafka-1-reg
+      - kafka-2-reg
+      - kafka-3-reg
+      - elasticsearch
+      - schema-registry
+
+  hadoop-namenode:
+    image: apache/hadoop:3.4.1
+    container_name: hadoop-namenode
+    hostname: hadoop-namenode
+    user: "root"
+    restart: always
+    platform: linux/amd64
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "1g"
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - ./hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./hadoop/hdfs-site-namenode.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./hadoop/namenode_entrypoint.sh:/namenode_entrypoint.sh
+    entrypoint: [ "/bin/bash", "/namenode_entrypoint.sh" ]
+    command: [ "hdfs", "namenode" ]
+
+  hadoop-datanode-1:
+    image: apache/hadoop:3.4.1
+    container_name: hadoop-datanode-1
+    hostname: hadoop-datanode-1
+    user: "root"
+    restart: always
+    platform: linux/amd64
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "1g"
+    shm_size: 1G
+    depends_on:
+      - hadoop-namenode
+    ports:
+      - "9864:9864"
+      - "9970:9970"
+    volumes:
+      - ./hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./hadoop/hdfs-site-datanode-1.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./hadoop/datanode_entrypoint.sh:/datanode_entrypoint.sh
+    entrypoint: [ "/bin/bash", "/datanode_entrypoint.sh" ]
+    command: [ "hdfs", "datanode" ]
+
 volumes:
   data-zookeeper-log-1:
   data-zookeeper-data-1:
   data-kafka-1:
   data-kafka-2:
   data-kafka-3:
-
   data-zookeeper-log-1-destination:
   data-zookeeper-data-1-destination:
   data-kafka-1-destination:
   data-kafka-2-destination:
   data-kafka-3-destination:
-
-
+  elasticsearch-data:
+  hadoop-name-data:
+  hadoop-data:
+  spark-data:

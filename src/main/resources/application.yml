@@ -1,8 +1,21 @@
 spring:
   kafka:
     bootstrap-servers: kafka-1:9093,kafka-2:9095,kafka-2:9097
+
   schema-registry:
     url: http://schema-registry:8081
+
+  elasticsearch:
+    uris: http://elasticsearch:9200
+
+  hdfs:
+    uri: hdfs://hadoop-namenode:9000
+    user: root
+    path: /topics/statistic-client/
+
+  spark:
+    app-name: KafkaHdfsSparkConsumer
+    master: local[*]
 
 server:
   port: 8090

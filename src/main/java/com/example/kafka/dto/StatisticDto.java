@@ -13,7 +13,7 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClientDtoKafka {
-    private String name;
-    private Integer id;
+public class StatisticDto {
+    private String clientId;
+    private String category;
 }

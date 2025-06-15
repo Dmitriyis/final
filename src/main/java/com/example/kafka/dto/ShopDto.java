@@ -19,7 +19,7 @@ import java.util.Map;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShopCandidateDtoKafka {
+public class ShopDto {
 
     @JsonProperty(value = "shop_id")
     private String shopId;

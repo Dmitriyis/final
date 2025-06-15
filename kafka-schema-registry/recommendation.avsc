@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "StatisticDto",
+  "namespace": "com.example.kafka.avro",
+  "fields": [
+    {
+      "name": "clientId",
+      "type": "string"
+    },
+    {
+      "name": "category",
+      "type": "string"
+    }
+  ]
+}
