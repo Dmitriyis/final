@@ -170,32 +170,6 @@ public class KafkaConfig {
 
     // Consumer
 
-//    @Bean
-//    public ConcurrentKafkaListenerContainerFactory<String, com.example.kafka.avro.ShopDto> listenerConsumerShop(KafkaProperties kafkaProperties, DefaultErrorHandler errorHandler) {
-//        HashMap<String, Object> configProps = new HashMap<>(kafkaProperties.buildConsumerProperties());
-//        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-//        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
-//        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, KafkaAvroDeserializer.class);
-//        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-//        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
-//        configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 20);
-//        configProps.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "10000");
-//        configProps.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, "3000");
-//        configProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 600000);
-//        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "shop-consumer-group");
-//
-//        configProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
-//        configProps.put("specific.avro.reader", true);
-//
-//        baseConfig(configProps);
-//        aclConf(configProps, "shop", saslPassword);
-//
-//        ConcurrentKafkaListenerContainerFactory<String, com.example.kafka.avro.ShopDto> listenerConsumerShop = new ConcurrentKafkaListenerContainerFactory<>();
-//        listenerConsumerShop.setConsumerFactory(new DefaultKafkaConsumerFactory<>(configProps));
-//        listenerConsumerShop.setCommonErrorHandler(errorHandler);
-//        return listenerConsumerShop;
-//    }
-
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, com.example.kafka.avro.StatisticDto> listenerStatisticClient(KafkaProperties kafkaProperties, DefaultErrorHandler errorHandler) {
 
